@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patronato Zacualpan</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; }
+        .container { max-width: 400px; margin: auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        canvas { max-width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-container">
+        <h2>Inicio de Sesión</h2>
+        <input type="text" id="username" placeholder="Nombre de usuario">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="login()">Ingresar</button>
+        <button onclick="recuperarContrasena()">¿Olvidaste tu contraseña?</button>
+    </div>
+
+    <div class="container" id="dashboard" style="display:none;">
+        <h2>Panel de Control</h2>
+        <p>Saldo actual: <span id="saldo">$0</span></p>
+        <div id="admin-controls" style="display:none;">
+            <button onclick="agregarIngreso()">Agregar Ingreso</button>
+            <button onclick="registrarEgreso()">Registrar Egreso</button>
+        </div>
+        <canvas id="balanceChart"></canvas>
+    </div>
+
+    <script>
+        let saldo = 0;
+        const admins = {
+            "Presidente": "admin123",
+            "Tesorero": "admin456",
+            "Secretario": "admin789",
+            "Vocal1": "admin111",
+            "Vocal2": "admin222"
+        };
+        let isAdmin = false;
+        let donadores = {};
+
+        function login() {
+            let username = document.getElementById('username').value;
+            let password = document.getElementById('password').value;
+            
+            if (admins[username] && admins[username] === password) {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                isAdmin = true;
+                document.getElementById('admin-controls').style.display = 'block';
+            } else {
+                Swal.fire('Error', 'Nombre de usuario o contraseña incorrectos.', 'error');
+            }
+        }
+
+        function recuperarContrasena() {
+            let username = prompt("Ingrese su nombre de usuario para recuperar la contraseña:");
+            if (admins[username]) {
+                Swal.fire('Recuperación de contraseña', `Su contraseña es: ${admins[username]}`, 'info');
+            } else {
+                Swal.fire('Error', 'Usuario no registrado.', 'error');
+            }
+        }
+
+        function agregarIngreso() {
+            if (!isAdmin) {
+                Swal.fire('Acceso denegado', 'Solo administradores pueden agregar ingresos.', 'error');
+                return;
+            }
+
+            let nombre = prompt("Ingrese el nombre del donador:");
+            if (!donadores[nombre]) {
+                let telefono = prompt("Ingrese el teléfono del donador:");
+                let poblacion = prompt("Ingrese la población del donador:");
+                let cantidadPorDia = parseFloat(prompt("¿Cuántos pesos por día donará este donador?"));
+                donadores[nombre] = { saldo: 0, telefono, poblacion, cantidadPorDia };
+            }
+
+            let cantidad = parseFloat(prompt("Ingrese el monto de la donación:"));
+            if (!isNaN(cantidad) && cantidad > 0) {
+                donadores[nombre].saldo += cantidad;
+                actualizarSaldo();
+            }
+        }
+
+        function registrarEgreso() {
+            if (!isAdmin) {
+                Swal.fire('Acceso denegado', 'Solo administradores pueden registrar egresos.', 'error');
+                return;
+            }
+
+            let monto = parseFloat(prompt('Ingrese el monto del egreso:'));
+            if (!isNaN(monto) && monto > 0) {
+                saldo -= monto;
+                actualizarSaldo();
+            }
+        }
+
+        function actualizarSaldo() {
+            let total = 0;
+            for (let donador in donadores) {
+                total += donadores[donador].saldo;
+            }
+            document.getElementById('saldo').innerText = `$${total}`;
+        }
+    </script>
+</body>
+</html>
